@@ -1,0 +1,52 @@
+/* src/components/Navbar.css */
+
+.neo-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .logo {
+    font-size: 1.8rem;
+    color: #ffffff;
+    font-weight: 700;
+  }
+  
+  .highlight {
+    color: #76ff03;
+  }
+  
+  .nav-links {
+    display: flex;
+    gap: 1rem;
+    list-style: none;
+  }
+  
+  .nav-button {
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    background: #76ff03;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 transparent;
+  }
+  
+  .nav-button:hover {
+    background: #ffffff;
+    color: #2c5364;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(118, 255, 3, 0.3);
+  }
+  
+  .nav-button.active {
+    background: #ffffff;
+    color: #0f2027;
+    font-weight: bold;
+  }
+  
