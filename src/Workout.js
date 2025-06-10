@@ -839,7 +839,6 @@ const categories = [
 
 const WorkoutExplorer = () => {
   const theme = useTheme();
-  const [selectedTab, setSelectedTab] = useState(0);
   const [favorites, setFavorites] = useState([]);
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
