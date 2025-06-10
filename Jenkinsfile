@@ -30,9 +30,10 @@ pipeline {
         stage('Deploy to Web Server') {
             steps {
                 echo 'Deploying build to web server directory...'
-                // Replace with your actual destination path
-                sh 'sudo rm -rf /var/www/html/fitnessfreak/*'
-                sh 'sudo cp -r build/* /var/www/html/fitnessfreak/'
+                sh '''
+            sudo rm -rf /var/www/html/fitnessfreak/*
+            sudo cp -r build/* /var/www/html/fitnessfreak/
+        '''
             }
         }
     }
