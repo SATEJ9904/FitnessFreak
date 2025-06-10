@@ -27,15 +27,16 @@ pipeline {
             }
         }
 
-        stage('Deploy to Web Server') {
-            steps {
-                echo 'Deploying build to web server directory...'
-                sh '''
-            sudo rm -rf /var/www/html/fitnessfreak/*
+       stage('Deploy to Web Server') {
+    steps {
+        echo "Deploying build to web server directory..."
+        sh '''
+            sudo mkdir -p /var/www/html/fitnessfreak
+            sudo chown -R $USER:$USER /var/www/html/fitnessfreak
             sudo cp -r build/* /var/www/html/fitnessfreak/
         '''
-            }
-        }
+    }
+}
     }
 
     post {
