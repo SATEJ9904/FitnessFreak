@@ -24,7 +24,7 @@ import {
 import Lottie from 'react-lottie';
 import { motion } from 'framer-motion';
 import Spa from '@mui/icons-material/Spa';
-import useTheme from '@mui/material/styles/useTheme';
+import { useTheme } from '@mui/material/styles';
 import FilterList from '@mui/icons-material/FilterList';
 import IconButton from '@mui/material/IconButton';
 import Dialog from '@mui/material/Dialog';
