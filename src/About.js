@@ -22,8 +22,7 @@ const About = () => {
 
       <h2 style={styles.subheading}>👩‍💻 Developed By</h2>
       <ul style={styles.list}>
-        <li><strong>Sanika Salokhe</strong></li>
-        <li><strong>Pranjali Vibhute</strong></li>
+        <li><strong>Satej Shendage</strong></li>
       </ul>
 
       <p style={styles.footer}>Thank you for trusting us to guide you toward a healthier lifestyle! 💪</p>
