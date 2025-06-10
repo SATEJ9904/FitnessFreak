@@ -9,12 +9,6 @@ import {
   Chip,
   Button,
   Paper,
-  Divider,
-  Tabs,
-  Tab,
-  useTheme,
-  IconButton,
-  Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -23,15 +17,9 @@ import {
 import { 
   FitnessCenter,
   Favorite,
-  FavoriteBorder,
-  Share,
-  Info,
-  Timer,
   Whatshot,
   AccessibilityNew,
   DirectionsRun,
-  Spa,
-  FilterList
 } from '@mui/icons-material';
 import Lottie from 'react-lottie';
 import { motion } from 'framer-motion';

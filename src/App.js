@@ -4,7 +4,6 @@ import Workouts from './Workout';
 import DietFoods from './dietfood';
 import BMICalculator from './BMIcalculator';
 import About from './About';
-import Navbar from './Navbar';
 
 
 function App() {
