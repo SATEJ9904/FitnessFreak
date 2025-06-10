@@ -9,7 +9,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 echo 'Cloning repository...'
-                git Jenkins_Key: 'github-ssh-key', url: 'git@github.com:SATEJ9904/FitnessFreak.git'
+                git credentialsId: 'Jenkins_Key', url: 'git@github.com:SATEJ9904/FitnessFreak.git'
             }
         }
 
