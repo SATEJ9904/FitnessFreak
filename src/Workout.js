@@ -23,6 +23,13 @@ import {
 } from '@mui/icons-material';
 import Lottie from 'react-lottie';
 import { motion } from 'framer-motion';
+import Spa from '@mui/icons-material/Spa';
+import useTheme from '@mui/material/styles/useTheme';
+import FilterList from '@mui/icons-material/FilterList';
+import IconButton from '@mui/material/IconButton';
+import Dialog from '@mui/material/Dialog';
+import Timer from '@mui/icons-material/Timer';
+
 
 // Import your Lottie animations
 import pushUpAnimation2 from "./Workouts/PushUp2.json";
