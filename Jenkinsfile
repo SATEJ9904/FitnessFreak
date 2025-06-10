@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    environment {
+        NODE_ENV = 'production'
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                echo 'Cloning repository...'
+                git Jenkins_Key: 'github-ssh-key', url: 'git@github.com:SATEJ9904/FitnessFreak.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo 'Installing NPM packages...'
+                sh 'npm install'
+            }
+        }
+
+        stage('Build React App') {
+            steps {
+                echo 'Building the React app...'
+                sh 'npm run build'
+            }
+        }
+
+        stage('Deploy to Web Server') {
+            steps {
+                echo 'Deploying build to web server directory...'
+                // Replace with your actual destination path
+                sh 'sudo rm -rf /var/www/html/fitnessfreak/*'
+                sh 'sudo cp -r build/* /var/www/html/fitnessfreak/'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment completed successfully!'
+        }
+        failure {
+            echo 'Deployment failed.'
+        }
+    }
+}
