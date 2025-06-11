@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         NODE_ENV = 'production'
+        DEPLOY_DIR = '/var/www/html/fitnessfreak'
     }
 
     stages {
@@ -27,70 +28,71 @@ pipeline {
             }
         }
 
-        stage('Prepare Deployment Directory') {
+        stage('Prepare Deployment') {
             steps {
-                echo 'Preparing web directory...'
-                sh '''
-                    sudo mkdir -p /var/www/html/fitnessfreak
-                    sudo chown -R $USER:$USER /var/www/html/fitnessfreak
-                    sudo chmod -R 755 /var/www/html
-                '''
+                echo 'Preparing deployment...'
+                script {
+                    // Check if directory exists and is writable
+                    def dirExists = sh(script: "if [ -d ${DEPLOY_DIR} ]; then exit 0; else exit 1; fi", returnStatus: true) == 0
+                    def dirWritable = sh(script: "if [ -w ${DEPLOY_DIR} ]; then exit 0; else exit 1; fi", returnStatus: true) == 0
+
+                    if (!dirExists || !dirWritable) {
+                        echo "Directory ${DEPLOY_DIR} needs setup"
+                        sh """
+                            sudo mkdir -p ${DEPLOY_DIR} || true
+                            sudo chown -R jenkins:jenkins ${DEPLOY_DIR} || true
+                            sudo chmod -R 755 ${DEPLOY_DIR} || true
+                        """
+                    }
+                }
             }
         }
 
-        stage('Deploy Build Files') {
+        stage('Deploy') {
             steps {
-                echo 'Deploying build to web server directory...'
-                sh '''
-                    rm -rf /var/www/html/fitnessfreak/*
-                    cp -r build/* /var/www/html/fitnessfreak/
-                '''
+                echo 'Deploying build...'
+                sh """
+                    rm -rf ${DEPLOY_DIR}/*
+                    cp -r build/* ${DEPLOY_DIR}/
+                """
             }
         }
 
         stage('Configure Nginx') {
             steps {
                 echo 'Configuring Nginx...'
-                sh '''
-                    # Create Nginx config
-                    sudo tee /etc/nginx/sites-available/fitnessfreak > /dev/null <<EOF
-server {
-    listen 8085;
-    server_name 192.168.1.50;
+                script {
+                    def nginxConfig = """
+                    server {
+                        listen 8085;
+                        server_name 192.168.1.50;
 
-    root /var/www/html/fitnessfreak;
-    index index.html;
+                        root ${DEPLOY_DIR};
+                        index index.html;
 
-    location / {
-        try_files \$uri \$uri/ /index.html;
-    }
-}
-EOF
+                        location / {
+                            try_files \$uri \$uri/ /index.html;
+                        }
+                    }
+                    """
 
-                    # Enable site
-                    sudo ln -sf /etc/nginx/sites-available/fitnessfreak /etc/nginx/sites-enabled/
-
-                    # Remove default config if exists
-                    sudo [ -f /etc/nginx/sites-enabled/default ] && sudo rm /etc/nginx/sites-enabled/default || true
-
-                    # Open firewall port
-                    sudo ufw allow 8085/tcp
-
-                    # Test and reload Nginx
-                    sudo nginx -t && sudo systemctl reload nginx
-                '''
+                    // Write config file as root
+                    sh """
+                        echo '${nginxConfig}' | sudo tee /etc/nginx/sites-available/fitnessfreak > /dev/null
+                        sudo ln -sf /etc/nginx/sites-available/fitnessfreak /etc/nginx/sites-enabled/
+                        sudo nginx -t && sudo systemctl reload nginx
+                    """
+                }
             }
         }
     }
 
     post {
         success {
-            echo '✅ Deployment and Nginx setup completed successfully!'
-            slackSend(color: 'good', message: 'Deployment to production succeeded')
+            echo '✅ Deployment completed successfully!'
         }
         failure {
-            echo '❌ Deployment failed or Nginx setup encountered an error.'
-            slackSend(color: 'danger', message: 'Deployment to production failed')
+            echo '❌ Deployment failed!'
         }
     }
 }
