@@ -15,17 +15,17 @@ const About = () => {
         <li><strong>Workout Suggestions:</strong> Get animated and effective workout routines that match your fitness level and BMI status.</li>
       </ul>
 
-      <h2 style={styles.subheading}>🎨 Creative UI/UX</h2>
+      <h2 style={styles.subheading}>Creative UI/UX</h2>
       <p style={styles.text}>
         Our design philosophy focuses on clean layouts, intuitive navigation, vibrant animations, and modern aesthetics — making health tracking enjoyable and engaging!
       </p>
 
-      <h2 style={styles.subheading}>👩‍💻 Developed By</h2>
+      <h2 style={styles.subheading}>Developed By</h2>
       <ul style={styles.list}>
         <li><strong>Satej Vinay Shendage</strong></li>
       </ul>
 
-      <p style={styles.footer}>Thank you for trusting us to guide you toward a healthier lifestyle! 💪</p>
+      <p style={styles.footer}>Thank you for trusting us to guide you toward a healthier lifestyle!</p>
     </div>
   );
 };
