@@ -27,21 +27,32 @@ pipeline {
             }
         }
 
+        stage('Prepare Deployment Directory') {
+            steps {
+                echo 'Preparing web directory...'
+                sh '''
+                    sudo mkdir -p /var/www/html/fitnessfreak
+                    sudo chown -R $USER:$USER /var/www/html/fitnessfreak
+                    sudo chmod -R 755 /var/www/html
+                '''
+            }
+        }
+
         stage('Deploy Build Files') {
             steps {
                 echo 'Deploying build to web server directory...'
                 sh '''
-                    sudo mkdir -p /var/www/html/fitnessfreak
-                    sudo cp -r build/* /var/www/html/fitnessfreak/
+                    rm -rf /var/www/html/fitnessfreak/*
+                    cp -r build/* /var/www/html/fitnessfreak/
                 '''
             }
         }
 
         stage('Configure Nginx') {
             steps {
-                echo 'Creating Nginx config, linking, opening port, and reloading Nginx...'
+                echo 'Configuring Nginx...'
                 sh '''
-                    # Create Nginx config in sites-available
+                    # Create Nginx config
                     sudo tee /etc/nginx/sites-available/fitnessfreak > /dev/null <<EOF
 server {
     listen 8085;
@@ -56,13 +67,16 @@ server {
 }
 EOF
 
-                    # Link to sites-enabled
-                    sudo ln -sf /etc/nginx/sites-available/fitnessfreak /etc/nginx/sites-enabled/fitnessfreak
+                    # Enable site
+                    sudo ln -sf /etc/nginx/sites-available/fitnessfreak /etc/nginx/sites-enabled/
 
-                    # Allow port 8085/tcp in UFW if not already allowed
-                    sudo ufw allow 8085/tcp || true
+                    # Remove default config if exists
+                    sudo [ -f /etc/nginx/sites-enabled/default ] && sudo rm /etc/nginx/sites-enabled/default || true
 
-                    # Test Nginx config and reload
+                    # Open firewall port
+                    sudo ufw allow 8085/tcp
+
+                    # Test and reload Nginx
                     sudo nginx -t && sudo systemctl reload nginx
                 '''
             }
@@ -72,9 +86,11 @@ EOF
     post {
         success {
             echo '✅ Deployment and Nginx setup completed successfully!'
+            slackSend(color: 'good', message: 'Deployment to production succeeded')
         }
         failure {
             echo '❌ Deployment failed or Nginx setup encountered an error.'
+            slackSend(color: 'danger', message: 'Deployment to production failed')
         }
     }
 }
