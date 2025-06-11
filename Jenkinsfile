@@ -27,23 +27,54 @@ pipeline {
             }
         }
 
-        stage('Deploy to Web Server') {
+        stage('Deploy Build Files') {
             steps {
                 echo 'Deploying build to web server directory...'
                 sh '''
-            mkdir -p /var/www/html/fitnessfreak
-            cp -r build/* /var/www/html/fitnessfreak/
-        '''
+                    sudo mkdir -p /var/www/html/fitnessfreak
+                    sudo cp -r build/* /var/www/html/fitnessfreak/
+                '''
+            }
+        }
+
+        stage('Configure Nginx') {
+            steps {
+                echo 'Creating Nginx config, linking, opening port, and reloading Nginx...'
+                sh '''
+                    # Create Nginx config in sites-available
+                    sudo tee /etc/nginx/sites-available/fitnessfreak > /dev/null <<EOF
+server {
+    listen 8085;
+    server_name 192.168.1.50;
+
+    root /var/www/html/fitnessfreak;
+    index index.html;
+
+    location / {
+        try_files \$uri /index.html;
+    }
+}
+EOF
+
+                    # Link to sites-enabled
+                    sudo ln -sf /etc/nginx/sites-available/fitnessfreak /etc/nginx/sites-enabled/fitnessfreak
+
+                    # Allow port 8085/tcp in UFW if not already allowed
+                    sudo ufw allow 8085/tcp || true
+
+                    # Test Nginx config and reload
+                    sudo nginx -t && sudo systemctl reload nginx
+                '''
             }
         }
     }
 
     post {
         success {
-            echo 'Deployment completed successfully!'
+            echo '✅ Deployment and Nginx setup completed successfully!'
         }
         failure {
-            echo 'Deployment failed.'
+            echo '❌ Deployment failed or Nginx setup encountered an error.'
         }
     }
 }
