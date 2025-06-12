@@ -8,10 +8,10 @@ const About = () => {
         Welcome to our smart and interactive health assistant — a platform that helps you stay fit and eat right based on your personal Body Mass Index (BMI).
       </p>
 
-      <h2 style={styles.subheading}> What We Offer</h2>
+      <h2 style={styles.subheading}>What We Offer</h2>
       <ul style={styles.list}>
         <li><strong>BMI Calculator:</strong> A simple and perfectly designed calculator to evaluate your BMI based on your height and weight.</li>
-        <li><strong>Food Suggestions:</strong> Receive scientifically curated food recommendations tailored to your BMI category, focusing on calories, proteins, vitamins, and other nutrients.</li>
+        <li><strong>Food Suggestions:</strong> Receive scientifically designed food recommendations tailored to your BMI category, focusing on calories, proteins, vitamins, and other nutrients.</li>
         <li><strong>Workout Suggestions:</strong> Get animated and effective workout routines that match your fitness level and BMI status.</li>
       </ul>
 
