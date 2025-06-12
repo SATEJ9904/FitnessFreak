@@ -64,7 +64,7 @@ pipeline {
                 script {
                     def nginxConfig = """
                     server {
-                        listen 8085;
+                        listen 80;
                         server_name 192.168.1.50;
 
                         root ${DEPLOY_DIR};
@@ -76,10 +76,21 @@ pipeline {
                     }
                     """
 
-                    // Write config file as root
+                    // Clear existing config if it exists and write new config
                     sh """
+                        # Remove existing symlink if it exists
+                        sudo [ -L /etc/nginx/sites-enabled/fitnessfreak ] && sudo rm /etc/nginx/sites-enabled/fitnessfreak || true
+                        
+                        # Remove existing config file if it exists
+                        sudo [ -f /etc/nginx/sites-available/fitnessfreak ] && sudo rm /etc/nginx/sites-available/fitnessfreak || true
+                        
+                        # Create new config file
                         echo '${nginxConfig}' | sudo tee /etc/nginx/sites-available/fitnessfreak > /dev/null
+                        
+                        # Create symlink
                         sudo ln -sf /etc/nginx/sites-available/fitnessfreak /etc/nginx/sites-enabled/
+                        
+                        # Test and reload Nginx
                         sudo nginx -t && sudo systemctl reload nginx
                     """
                 }
@@ -89,10 +100,10 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment completed successfully!'
+            echo '✅ Deployment completed successfully!'
         }
         failure {
-            echo 'Deployment failed!'
+            echo '❌ Deployment failed!'
         }
     }
 }
