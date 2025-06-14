@@ -100,10 +100,10 @@ pipeline {
 
     post {
         success {
-            echo ' Deployment completed successfully!'
+            echo '✅ Deployment completed successfully!'
         }
         failure {
-            echo ' Deployment failed!'
+            echo '❌ Deployment failed!'
         }
     }
 }
