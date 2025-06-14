@@ -10,7 +10,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 echo 'Cloning repository...'
-                git branch: 'main', credentialsId: 'Jenkins_Key', url: 'git@github.com:SATEJ9904/FitnessFreak.git'
+                git branch: 'main', credentialsId: 'da6c6434-0cdb-446d-8964-a0ce0523aff8', url: 'git@github.com:SATEJ9904/FitnessFreak.git'
             }
         }
 
