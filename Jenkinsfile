@@ -5,7 +5,7 @@ pipeline {
         IMAGE_NAME = 'satejshendage09/fitnessfreak'
         IMAGE_TAG = 'latest'
         DEPLOY_SERVER = '192.168.1.50'
-        DEPLOY_USER = 'ubuntu'
+        DEPLOY_USER = 'micro'
     }
 
     stages {
