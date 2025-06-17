@@ -84,3 +84,4 @@ stage('Deploy to Ubuntu Server') {
         }
     }
 }
+}
