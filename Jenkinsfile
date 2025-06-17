@@ -37,11 +37,16 @@ pipeline {
 
         stage('Push to DockerHub') {
             steps {
-              withCredentials([usernamePassword(credentialsId: 'Docker_Key', 
-                usernameVariable: 'satejshendage09', 
-                passwordVariable: 'Satej@9904')]) {
-    sh 'echo $DOCKER_PWD | docker login -u $DOCKER_USER --password-stdin'
-}
+                withCredentials([usernamePassword(
+                    credentialsId: 'Docker_Key',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PWD'
+                )]) {
+                    sh """
+                        echo \$DOCKER_PWD | docker login -u \$DOCKER_USER --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                    """
+                }
             }
         }
 
