@@ -134,11 +134,11 @@ pipeline {
             cleanWs() // Clean workspace after build
         }
         success {
-            echo '🎉 Deployment Successful!'
+            echo '🎉Deployment Successful!'
             // Add notification here (email, Slack, etc.)
         }
         failure {
-            echo '❌ Deployment Failed!'
+            echo '❌Deployment Failed!'
             // Add failure notification here
         }
     }
