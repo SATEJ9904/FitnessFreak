@@ -2,96 +2,60 @@ pipeline {
     agent any
 
     environment {
-        NODE_ENV = 'production'
-        DEPLOY_DIR = '/var/www/html/fitnessfreak'
+        IMAGE_NAME = 'satejshendage09/fitnessfreak'
+        IMAGE_TAG = 'latest'
+        DEPLOY_SERVER = '192.168.1.50'
+        DEPLOY_USER = 'ubuntu'
     }
 
     stages {
         stage('Clone Repository') {
             steps {
-                echo 'Cloning repository...'
                 git branch: 'main', credentialsId: 'Jenkins_Key', url: 'git@github.com:SATEJ9904/FitnessFreak.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo 'Installing NPM packages...'
                 sh 'npm install'
             }
         }
 
         stage('Build React App') {
             steps {
-                echo 'Building the React app...'
                 sh 'npm run build'
             }
         }
 
-        stage('Prepare Deployment') {
+        stage('Build Docker Image') {
             steps {
-                echo 'Preparing deployment...'
                 script {
-                    // Check if directory exists and is writable
-                    def dirExists = sh(script: "if [ -d ${DEPLOY_DIR} ]; then exit 0; else exit 1; fi", returnStatus: true) == 0
-                    def dirWritable = sh(script: "if [ -w ${DEPLOY_DIR} ]; then exit 0; else exit 1; fi", returnStatus: true) == 0
-
-                    if (!dirExists || !dirWritable) {
-                        echo "Directory ${DEPLOY_DIR} needs setup"
-                        sh """
-                            sudo mkdir -p ${DEPLOY_DIR} || true
-                            sudo chown -R jenkins:jenkins ${DEPLOY_DIR} || true
-                            sudo chmod -R 755 ${DEPLOY_DIR} || true
-                        """
-                    }
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Push to DockerHub') {
             steps {
-                echo 'Deploying build...'
-                sh """
-                    rm -rf ${DEPLOY_DIR}/*
-                    cp -r build/* ${DEPLOY_DIR}/
-                """
+                withCredentials([usernamePassword(credentialsId: 'Docker_Key', passwordVariable: 'Satej@9904', usernameVariable: 'satejshendage09')]) {
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                    '''
+                }
             }
         }
 
-        stage('Configure Nginx') {
+        stage('Deploy to Ubuntu Server') {
             steps {
-                echo 'Configuring Nginx...'
-                script {
-                    def nginxConfig = """
-                    server {
-                        listen 80;
-                        server_name 192.168.1.50;
-
-                        root ${DEPLOY_DIR};
-                        index index.html;
-
-                        location / {
-                            try_files \$uri \$uri/ /index.html;
-                        }
-                    }
-                    """
-
-                    // Clear existing config if it exists and write new config
+                sshagent(['Ubuntu_SSH']) {
                     sh """
-                        # Remove existing symlink if it exists
-                        sudo [ -L /etc/nginx/sites-enabled/fitnessfreak ] && sudo rm /etc/nginx/sites-enabled/fitnessfreak || true
-                        
-                        # Remove existing config file if it exists
-                        sudo [ -f /etc/nginx/sites-available/fitnessfreak ] && sudo rm /etc/nginx/sites-available/fitnessfreak || true
-                        
-                        # Create new config file
-                        echo '${nginxConfig}' | sudo tee /etc/nginx/sites-available/fitnessfreak > /dev/null
-                        
-                        # Create symlink
-                        sudo ln -sf /etc/nginx/sites-available/fitnessfreak /etc/nginx/sites-enabled/
-                        
-                        # Test and reload Nginx
-                        sudo nginx -t && sudo systemctl reload nginx
+                        ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} '
+                            docker pull ${IMAGE_NAME}:${IMAGE_TAG} &&
+                            docker stop fitnessfreak || true &&
+                            docker rm fitnessfreak || true &&
+                            docker run -d --name fitnessfreak -p 80:80 ${IMAGE_NAME}:${IMAGE_TAG}
+                        '
                     """
                 }
             }
@@ -100,10 +64,10 @@ pipeline {
 
     post {
         success {
-            echo ' Deployment completed successfully!'
+            echo '🎉 Deployment Successful!'
         }
         failure {
-            echo ' Deployment failed!'
+            echo '❌ Deployment Failed!'
         }
     }
 }
