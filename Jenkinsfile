@@ -3,11 +3,12 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'satejshendage09/fitnessfreak'
-        IMAGE_TAG = 'latest'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"  // Use build number for versioning
         DEPLOY_SERVER = '192.168.1.50'
         DEPLOY_USER = 'micro'
         SSH_CREDENTIALS_ID = 'Ubuntu_SSH'
         DOCKER_CREDENTIALS_ID = 'Docker_Key'
+        DOCKER_BUILDKIT = '1'  // Enable BuildKit for faster builds
     }
 
     stages {
@@ -19,110 +20,62 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm install'
-            }
-        }
-
-        stage('Build React App') {
-            steps {
-                sh 'npm run build'
-            }
-        }
-
-        stage('Build Docker Image') {
+        stage('Build & Push Docker Image') {
             steps {
                 script {
-                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                }
-            }
-        }
-
-        stage('Push to DockerHub') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: DOCKER_CREDENTIALS_ID,
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PWD'
-                )]) {
-                    sh """
-                        echo \$DOCKER_PWD | docker login -u \$DOCKER_USER --password-stdin || {
-                            echo "Docker login failed!"
-                            exit 1
-                        }
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG} || {
-                            echo "Docker push failed!"
-                            exit 1
-                        }
-                    """
+                    withCredentials([usernamePassword(
+                        credentialsId: DOCKER_CREDENTIALS_ID,
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PWD'
+                    )]) {
+                        sh """
+                            echo \$DOCKER_PWD | docker login -u \$DOCKER_USER --password-stdin
+                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                            docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                            docker push ${IMAGE_NAME}:latest
+                        """
+                    }
                 }
             }
         }
 
         stage('Verify Server Connection') {
             steps {
-                script {
-                    try {
-                        sshagent([SSH_CREDENTIALS_ID]) {
-                            sh """
-                                echo "Testing SSH connection to ${DEPLOY_USER}@${DEPLOY_SERVER}"
-                                ssh -vvv -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} '
-                                    echo "SSH connection successful!"
-                                    whoami
-                                    docker --version || echo "Docker not installed"
-                                '
-                            """
-                        }
-                    } catch (err) {
-                        echo "SSH Connection Test Failed: ${err}"
-                        currentBuild.result = 'FAILURE'
-                        error("Pipeline failed due to SSH connection issues")
-                    }
+                sshagent([SSH_CREDENTIALS_ID]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} '
+                            docker --version || exit 1
+                        '
+                    """
                 }
             }
         }
 
-        stage('Deploy to Ubuntu Server') {
+        stage('Deploy') {
             steps {
-                script {
-                    try {
-                        sshagent([SSH_CREDENTIALS_ID]) {
-                            sh """
-                                echo "Starting deployment to ${DEPLOY_SERVER}"
-                                ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} '
-                                    echo "Pulling latest image..."
-                                    docker pull ${IMAGE_NAME}:${IMAGE_TAG} || {
-                                        echo "Failed to pull image"
-                                        exit 1
-                                    }
-                                    
-                                    echo "Stopping existing container..."
-                                    docker stop fitnessfreak || echo "No running container to stop"
-                                    
-                                    echo "Removing existing container..."
-                                    docker rm fitnessfreak || echo "No container to remove"
-                                    
-                                    echo "Starting new container..."
-                                    docker run -d --name fitnessfreak -p 80:80 ${IMAGE_NAME}:${IMAGE_TAG} || {
-                                        echo "Failed to start container"
-                                        exit 1
-                                    }
-                                    
-                                    echo "Verifying deployment..."
-                                    docker ps | grep fitnessfreak || {
-                                        echo "Container not running"
-                                        exit 1
-                                    }
-                                    echo "Deployment successful!"
-                                '
-                            """
-                        }
-                    } catch (err) {
-                        echo "Deployment Failed: ${err}"
-                        currentBuild.result = 'FAILURE'
-                        error("Deployment stage failed")
-                    }
+                sshagent([SSH_CREDENTIALS_ID]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} << 'EOF'
+                            # Pull the specific version
+                            docker pull ${IMAGE_NAME}:${IMAGE_TAG} || exit 1
+                            
+                            # Stop and remove old container
+                            docker stop fitnessfreak || true
+                            docker rm fitnessfreak || true
+                            
+                            # Run new container with health check
+                            docker run -d \\
+                              --name fitnessfreak \\
+                              --restart unless-stopped \\
+                              -p 80:80 \\
+                              ${IMAGE_NAME}:${IMAGE_TAG}
+                            
+                            # Verify deployment
+                            sleep 5  # Give container time to start
+                            docker ps --filter "name=fitnessfreak" --filter "status=running" | grep fitnessfreak || exit 1
+EOF
+                    """
                 }
             }
         }
@@ -130,16 +83,14 @@ pipeline {
 
     post {
         always {
-            echo "Pipeline completed with status: ${currentBuild.result}"
-            cleanWs() // Clean workspace after build
+            cleanWs()
         }
         success {
-            echo '🎉Deployment Successful!'
-            // Add notification here (email, Slack, etc.)
+            echo "✅ Deployment of ${IMAGE_NAME}:${IMAGE_TAG} successful!"
         }
         failure {
-            echo '❌Deployment Failed!'
-            // Add failure notification here
+            echo "❌ Deployment failed!"
+            // Add notification here
         }
     }
 }
