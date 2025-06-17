@@ -40,7 +40,7 @@ pipeline {
                withCredentials([usernamePassword(credentialsId: 'Docker_Key', usernameVariable: 'satejshendage09', passwordVariable: 'Satej@9904')]) {
                   sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
                }
-            } ̰
+            } 
         }
 
         stage('Deploy to Ubuntu Server') {
