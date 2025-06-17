@@ -50,21 +50,30 @@ pipeline {
             }
         }
 
-        stage('Deploy to Ubuntu Server') {
-            steps {
+stage('Deploy to Ubuntu Server') {
+    steps {
+        script {
+            try {
                 sshagent(['Ubuntu_SSH']) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} '
+                        if ! ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} '
                             docker pull ${IMAGE_NAME}:${IMAGE_TAG} &&
                             docker stop fitnessfreak || true &&
                             docker rm fitnessfreak || true &&
                             docker run -d --name fitnessfreak -p 80:80 ${IMAGE_NAME}:${IMAGE_TAG}
-                        '
+                        '; then
+                            echo "Deployment failed!"
+                            exit 1
+                        fi
                     """
                 }
+            } catch (err) {
+                echo "Deployment error: ${err}"
+                currentBuild.result = 'FAILURE'
             }
         }
     }
+}
 
     post {
         success {
