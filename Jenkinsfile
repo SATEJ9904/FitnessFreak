@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', credentialsId: 'Jenkins_Key', url: 'git@github.com:SATEJ9904/FitnessFreak.git'
+                git branch: 'main', credentialsId: 'Jenkins_Key', url: 'https://github.com/SATEJ9904/FitnessFreak.git'
             }
         }
 
